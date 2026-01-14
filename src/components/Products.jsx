@@ -9,7 +9,7 @@ export default function Products() {
           <h1 className="section-title">Our Products</h1>
           <div className="products-grid" id="productsGrid">
             {products.map((product) => (
-              <Product product={product} />
+              <Product key={product.id} product={product} />
             ))}
           </div>
         </section>
