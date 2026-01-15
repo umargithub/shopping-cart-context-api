@@ -5,7 +5,7 @@ export default function Product({ product }) {
   const { addItem } = useContext(CartContext);
   return (
     <div className="product-card">
-      <div className="product-image">
+      <div>
         <img src={product.image} alt={product.name} className="product-image" />
       </div>
       <div className="product-info">

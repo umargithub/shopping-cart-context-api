@@ -3,22 +3,23 @@ import { products } from "../data/produtcs";
 
 export const CartContext = createContext({
   items: [],
+  isOpen: false,
   addItem: () => {},
-  // removeItem: () => {},
-  // updateQunatity: () => {},
-  // toggleCart: () => {},
+  removeItem: () => {},
+  updateQunatity: () => {},
+  toggleCart: () => {},
+  totalAmount: 0,
+  totalItems: 0,
 });
 
 export function CartContextProvider({ children }) {
   const [shoppingCart, setShoppingCart] = useState({
     items: [],
+    isOpen: false,
   });
-
-  console.log(shoppingCart);
 
   function addItem(id) {
     setShoppingCart((prevShoppingCart) => {
-      // Check if item already exists
       const existingItemIndex = prevShoppingCart.items.findIndex(
         (item) => item.id === id
       );
@@ -26,14 +27,10 @@ export function CartContextProvider({ children }) {
       let updatedItems;
 
       if (existingItemIndex !== -1) {
-        // Item exists - update quantity
-        console.log("existing item");
         updatedItems = prevShoppingCart.items.map((item) =>
           item.id === id ? { ...item, quantity: item.quantity + 1 } : item
         );
       } else {
-        // Item doesn't exist - add new item
-        console.log("NEW item");
         const newProduct = products.find((product) => product.id === id);
         updatedItems = [
           ...prevShoppingCart.items,
@@ -45,9 +42,49 @@ export function CartContextProvider({ children }) {
     });
   }
 
+  function updateQuantity(id, delta) {
+    setShoppingCart((prevShoppingCart) => ({
+      ...prevShoppingCart,
+      items: prevShoppingCart.items
+        .map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity + delta } : item
+        )
+        .filter((item) => item.quantity > 0),
+    }));
+  }
+
+  function removeItem(id) {
+    setShoppingCart((prevShoppingCart) => {
+      return {
+        ...prevShoppingCart,
+        items: prevShoppingCart.items.filter((item) => item.id !== id),
+      };
+    });
+  }
+
+  function toggleCart() {
+    setShoppingCart((prevShoppingCart) => {
+      return { ...prevShoppingCart, isOpen: !prevShoppingCart.isOpen };
+    });
+  }
+
+  let totalAmount = shoppingCart.items.reduce((total, item) => {
+    return total + item.quantity * item.price;
+  }, 0);
+
+  let totalItems = shoppingCart.items.reduce((total, item) => {
+    return total + item.quantity;
+  }, 0);
+
   const contextValue = {
     items: shoppingCart.items,
+    isOpen: shoppingCart.isOpen,
     addItem,
+    updateQuantity,
+    removeItem,
+    toggleCart,
+    totalAmount,
+    totalItems,
   };
 
   return (

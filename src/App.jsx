@@ -11,8 +11,6 @@ function App() {
 
       <Products />
 
-      <div className="overlay" id="overlay"></div>
-
       <CartSidebar />
     </CartContextProvider>
   );
