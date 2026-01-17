@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useReducer } from "react";
 import { products } from "../data/produtcs";
 
 export const CartContext = createContext({
@@ -12,59 +12,86 @@ export const CartContext = createContext({
   totalItems: 0,
 });
 
-export function CartContextProvider({ children }) {
-  const [shoppingCart, setShoppingCart] = useState({
-    items: [],
-    isOpen: false,
-  });
-
-  function addItem(id) {
-    setShoppingCart((prevShoppingCart) => {
-      const existingItemIndex = prevShoppingCart.items.findIndex(
-        (item) => item.id === id
+function shoppingCartReducer(state, action) {
+  switch (action.type) {
+    case "ADD_ITEM":
+      const existingItemIndex = state.items.findIndex(
+        (item) => item.id === action.payload,
       );
 
       let updatedItems;
 
       if (existingItemIndex !== -1) {
-        updatedItems = prevShoppingCart.items.map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+        updatedItems = state.items.map((item) =>
+          item.id === action.payload
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
         );
       } else {
-        const newProduct = products.find((product) => product.id === id);
-        updatedItems = [
-          ...prevShoppingCart.items,
-          { ...newProduct, quantity: 1 },
-        ];
+        const newProduct = products.find(
+          (product) => product.id === action.payload,
+        );
+        updatedItems = [...state.items, { ...newProduct, quantity: 1 }];
       }
 
-      return { ...prevShoppingCart, items: updatedItems };
+      return { ...state, items: updatedItems };
+
+    case "UPDATE_ITEM":
+      return {
+        ...state,
+        items: state.items
+          .map((item) =>
+            item.id === action.payload.id
+              ? { ...item, quantity: item.quantity + action.payload.delta }
+              : item,
+          )
+          .filter((item) => item.quantity > 0),
+      };
+
+    case "REMOVE_ITEM":
+      return {
+        ...state,
+        items: state.items.filter((item) => item.id !== action.payload),
+      };
+
+    case "TOGGLE_CART":
+      return { ...state, isOpen: !state.isOpen };
+
+    default:
+      return state;
+  }
+}
+
+export function CartContextProvider({ children }) {
+  const [shoppingCart, shoppingCartDispatch] = useReducer(shoppingCartReducer, {
+    items: [],
+    isOpen: false,
+  });
+
+  function addItem(id) {
+    shoppingCartDispatch({
+      type: "ADD_ITEM",
+      payload: id,
     });
   }
 
   function updateQuantity(id, delta) {
-    setShoppingCart((prevShoppingCart) => ({
-      ...prevShoppingCart,
-      items: prevShoppingCart.items
-        .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity + delta } : item
-        )
-        .filter((item) => item.quantity > 0),
-    }));
+    shoppingCartDispatch({
+      type: "UPDATE_ITEM",
+      payload: { id, delta },
+    });
   }
 
   function removeItem(id) {
-    setShoppingCart((prevShoppingCart) => {
-      return {
-        ...prevShoppingCart,
-        items: prevShoppingCart.items.filter((item) => item.id !== id),
-      };
+    shoppingCartDispatch({
+      type: "REMOVE_ITEM",
+      payload: id,
     });
   }
 
   function toggleCart() {
-    setShoppingCart((prevShoppingCart) => {
-      return { ...prevShoppingCart, isOpen: !prevShoppingCart.isOpen };
+    shoppingCartDispatch({
+      type: "TOGGLE_CART",
     });
   }
 
